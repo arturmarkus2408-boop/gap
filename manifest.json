@@ -1,16 +1,14 @@
 {
-  "name": "GAP — тренажёр переговоров",
+  "name": "GAP",
   "short_name": "GAP",
-  "description": "AI-тренажёр переговоров. GAP — разговор (узб.)",
-  "start_url": "./index.html",
+  "description": "AI-тренажёр переговоров",
+  "start_url": "./",
   "scope": "./",
-  "id": "/gap/",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "lang": "ru",
-  "categories": ["business", "education", "productivity"],
   "icons": [
     {
       "src": "icon-192.png",
