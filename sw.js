@@ -1,4 +1,4 @@
-const CACHE = 'nego-v1';
+const CACHE = 'gap-v1';
 const ASSETS = ['./index.html', './manifest.json', './sw.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
