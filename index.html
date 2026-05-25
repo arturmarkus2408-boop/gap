@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="manifest" href="manifest.json">
+<title>Тренажёр переговоров</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --surf: #161b22;
+  --surf2: #21262d;
+  --border: #30363d;
+  --gold: #d4a843;
+  --gold-bg: rgba(212,168,67,.1);
+  --gold-br: rgba(212,168,67,.28);
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+  --green-bg: rgba(63,185,80,.07);
+  --green-br: rgba(63,185,80,.22);
+  --user-bg: #1a2332;
+  --user-br: #2a3f5a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;overflow:hidden}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .25s ease}
+.screen.active{display:flex;opacity:1}
+
+/* ── SETUP ── */
+#sc-setup{align-items:center;justify-content:center;padding:32px 24px;background:var(--bg)}
+.su-inner{width:100%;max-width:380px}
+.su-logo{text-align:center;margin-bottom:36px}
+.su-icon{width:60px;height:60px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px}
+.su-logo h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:600}
+.su-logo p{font-size:13px;color:var(--text2);margin-top:5px}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:22px}
+.card h2{font-size:14px;font-weight:500;margin-bottom:6px}
+.card p{font-size:13px;color:var(--text2);margin-bottom:14px}
+.card a{color:var(--gold);text-decoration:none}
+.inp{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:10px}
+.inp:focus{border-color:var(--gold)}
+.inp::placeholder{color:var(--text3)}
+.btn{width:100%;background:var(--gold);color:#0d1117;border:none;border-radius:8px;padding:13px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .1s}
+.btn:active{transform:scale(.98);opacity:.88}
+.btn:disabled{opacity:.4;cursor:default}
+.su-note{margin-top:10px;font-size:11px;color:var(--text3);text-align:center}
+.su-note a{color:var(--gold);text-decoration:none}
+
+/* ── HOME ── */
+#sc-home{background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.hh{padding:48px 20px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
+.hh h1{font-family:'Playfair Display',serif;font-size:20px;font-weight:600}
+.hh p{font-size:13px;color:var(--text2);margin-top:3px}
+.hbody{padding:16px 20px 120px}
+.lbl{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;margin-top:20px}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.sc-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:13px 11px;cursor:pointer;transition:border-color .2s,background .2s;text-align:left}
+.sc-card.sel{border-color:var(--gold);background:var(--gold-bg)}
+.sc-card .ico{font-size:22px;margin-bottom:7px}
+.sc-card .ttl{font-size:12px;font-weight:500;line-height:1.4;color:var(--text)}
+.diff-row{display:flex;gap:7px}
+.dp{flex:1;text-align:center;background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:8px 3px;font-size:12px;cursor:pointer;transition:all .2s;color:var(--text2)}
+.dp.sel{border-color:var(--gold);color:var(--gold);background:var(--gold-bg)}
+.ctx{width:100%;background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;min-height:68px;line-height:1.5;transition:border-color .2s}
+.ctx:focus{border-color:var(--gold)}
+.ctx::placeholder{color:var(--text3)}
+.start-bar{position:fixed;bottom:0;left:0;right:0;padding:14px 20px;background:var(--bg);border-top:1px solid var(--border)}
+
+/* ── CHAT ── */
+#sc-chat{background:var(--bg)}
+.ch{display:flex;align-items:center;gap:10px;padding:42px 14px 12px;border-bottom:1px solid var(--border);background:var(--surf);flex-shrink:0}
+.back-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--surf2);border:1px solid var(--border);border-radius:8px;cursor:pointer;flex-shrink:0;font-size:15px;color:var(--text)}
+.ch-info{flex:1;min-width:0}
+.ch-title{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-sub{font-size:11px;color:var(--text2)}
+.badge{font-size:10px;font-weight:500;padding:3px 8px;border-radius:12px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-br);flex-shrink:0}
+.dbr-btn{background:var(--surf2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:11px;color:var(--text2);cursor:pointer;flex-shrink:0;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.dbr-btn:active{opacity:.7}
+
+.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 6px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;flex-direction:column;max-width:84%;animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.ai{align-self:flex-start;align-items:flex-start}
+.msg.hint,.msg.dbr{align-self:stretch;max-width:100%}
+.bbl{padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.msg.user .bbl{background:var(--user-bg);border:1px solid var(--user-br);border-bottom-right-radius:3px}
+.msg.ai .bbl{background:var(--surf);border:1px solid var(--border);border-bottom-left-radius:3px}
+.msg.hint .bbl{background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:10px;width:100%}
+.msg.dbr .bbl{background:var(--green-bg);border:1px solid var(--green-br);border-radius:10px;width:100%}
+.msg-t{font-size:10px;color:var(--text3);margin-top:2px;padding:0 3px}
+.cmd-lbl{text-align:center;font-size:11px;color:var(--text3);padding:3px 0}
+
+.typing{display:flex;align-items:center;gap:4px;padding:11px 13px;background:var(--surf);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:3px;width:fit-content}
+.dot{width:5px;height:5px;background:var(--text3);border-radius:50%;animation:tb 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+
+.cia{display:flex;gap:7px;padding:9px 11px;border-top:1px solid var(--border);background:var(--surf);align-items:flex-end;flex-shrink:0}
+.hint-b{width:38px;height:38px;flex-shrink:0;background:var(--surf2);border:1px solid var(--border);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:opacity .2s}
+.hint-b:active{opacity:.65}
+.ci{flex:1;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;max-height:96px;overflow-y:auto;line-height:1.4;transition:border-color .2s}
+.ci:focus{border-color:var(--gold)}
+.ci::placeholder{color:var(--text3)}
+.send-b{width:38px;height:38px;flex-shrink:0;background:var(--gold);border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .1s}
+.send-b:active{transform:scale(.92);opacity:.85}
+.send-b:disabled{opacity:.35;cursor:default}
+.send-b svg{width:17px;height:17px}
+
+.toast{position:fixed;bottom:78px;left:14px;right:14px;background:rgba(248,81,73,.92);color:#fff;padding:11px 14px;border-radius:8px;font-size:13px;text-align:center;z-index:200;display:none}
+
+/* key tip on home */
+.key-tip{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.4}
+.key-tip b{color:var(--text2);font-weight:500}
+
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:1px}
+</style>
+</head>
+<body>
+
+<!-- ── SETUP ── -->
+<div id="sc-setup" class="screen active">
+  <div class="su-inner">
+    <div class="su-logo">
+      <div class="su-icon">🤝</div>
+      <h1>Тренажёр переговоров</h1>
+      <p>AI-собеседник для отточки ваших навыков</p>
+    </div>
+    <div class="card">
+      <h2>Ключ Gemini API</h2>
+      <p>Бесплатно. Получить на <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> → «Get API key» → «Create API key»</p>
+      <input type="password" class="inp" id="api-inp" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="btn" onclick="saveKey()">Сохранить и начать</button>
+    </div>
+    <p class="su-note">Ключ хранится только на вашем устройстве &nbsp;·&nbsp; <a href="https://aistudio.google.com/app/apikey" target="_blank">Получить ключ</a></p>
+  </div>
+</div>
+
+<!-- ── HOME ── -->
+<div id="sc-home" class="screen">
+  <div class="hh">
+    <h1>Новая сессия</h1>
+    <p>Выберите сценарий и уровень сложности</p>
+  </div>
+  <div class="hbody">
+    <div class="lbl">Сценарий</div>
+    <div class="sc-grid">
+      <div class="sc-card" data-s="0" onclick="pickS(0)"><div class="ico">🤝</div><div class="ttl">Продажа услуг новому клиенту</div></div>
+      <div class="sc-card" data-s="1" onclick="pickS(1)"><div class="ico">🔄</div><div class="ttl">Удержание или допродажа</div></div>
+      <div class="sc-card" data-s="2" onclick="pickS(2)"><div class="ico">👥</div><div class="ttl">Партнёр или сотрудник</div></div>
+      <div class="sc-card" data-s="3" onclick="pickS(3)"><div class="ico">🏦</div><div class="ttl">Кредитор / банк / налоговая</div></div>
+    </div>
+
+    <div class="lbl">Сложность</div>
+    <div class="diff-row">
+      <div class="dp" data-d="0" onclick="pickD(0)">Лёгкий</div>
+      <div class="dp" data-d="1" onclick="pickD(1)">Средний</div>
+      <div class="dp" data-d="2" onclick="pickD(2)">Сложный</div>
+      <div class="dp" data-d="3" onclick="pickD(3)">Жёсткий</div>
+    </div>
+
+    <div class="lbl">Контекст (необязательно)</div>
+    <textarea class="ctx" id="ctx-inp" placeholder="Тип клиента, сумма, история отношений..."></textarea>
+
+    <div class="key-tip" style="margin-top:16px">
+      Во время разговора: <b>💡</b> — подсказка &nbsp;·&nbsp; <b>Разбор</b> — анализ сессии &nbsp;·&nbsp; <b>сложнее / мягче</b> — управление напором
+    </div>
+  </div>
+  <div class="start-bar">
+    <button class="btn" id="start-btn" onclick="startChat()" disabled>Начать тренировку →</button>
+  </div>
+</div>
+
+<!-- ── CHAT ── -->
+<div id="sc-chat" class="screen">
+  <div class="ch">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <div class="ch-info">
+      <div class="ch-title" id="ch-title">Переговоры</div>
+      <div class="ch-sub" id="ch-sub">Идёт сессия</div>
+    </div>
+    <div class="badge" id="ch-badge">Средний</div>
+    <button class="dbr-btn" onclick="doDebrief()">📋 Разбор</button>
+  </div>
+  <div class="msgs" id="msgs"></div>
+  <div class="cia">
+    <div class="hint-b" onclick="doHint()" title="Подсказка">💡</div>
+    <textarea class="ci" id="ci" placeholder="Ваш ответ..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+    <button class="send-b" id="send-b" onclick="send()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCENES = ['Продажа услуг новому клиенту','Удержание / допродажа клиенту','Переговоры с партнёром или сотрудником','Переговоры с кредитором, банком или налоговой'];
+const DIFFS  = ['Лёгкий','Средний','Сложный','Жёсткий'];
+
+const SYS = `Ты — тренажёр переговоров. Пользователь — владелец бухгалтерской и консалтинговой компании в Ташкенте (Узбекистан). Услуги: бухгалтерия, регистрация ООО/ИП, налоговый консалтинг.
+
+РОЛЬ: ты реальный собеседник в переговорах — не помощник, не коуч. У тебя свои интересы, возражения, упрямство.
+
+СТАРТ: когда получишь параметры сессии — кратко представься (кто ты, твоя позиция, 2-3 предложения) и жди первого хода.
+
+РЕАЛИИ УЗБЕКИСТАНА:
+Суммы в UZS или USD. Термины: ООО, ИП, ГНК, БРВ, хокимият, e-imzo, ЕНП, оборотный налог.
+Типичные возражения: "дорого", "есть бухгалтер за 500 тысяч", "давай за наличку без договора", "скидку дай 30%", "подумаю, позвоню", "у меня племянник считает", "подождём квартал".
+
+ПОВЕДЕНИЕ ПО УРОВНЯМ:
+Лёгкий — открытый, немного сомневается, легко переубедить.
+Средний — осторожный, стандартные возражения, нужны аргументы.
+Сложный — давит на цену, манипулирует, тянет время, несколько возражений подряд.
+Жёсткий — агрессивный напор, нелогичные требования, эмоциональное давление, проверяет терпение.
+
+ПРАВИЛА:
+• Не выходи из роли без команды
+• Не давай советов во время сцены
+• Не сдавайся на первом аргументе — держи позицию минимум 2-3 хода
+• Веди себя как живой человек: переспрашивай, уточняй, иногда молчи
+
+КОМАНДЫ:
+▶ "подсказка" — выйди из роли, дай РОВНО 3 пронумерованных варианта фразы (1-2 предложения + 1 строка почему работает), затем напиши "— возвращаюсь в роль —" и продолжи
+▶ "стоп, разбор" — структурированный разбор:
+  ✅ ЧТО СИЛЬНО: 2-3 конкретные фразы + почему сработали
+  ❌ ЧТО СЛАБО: 2-3 конкретные фразы + что не так
+  💡 УПУЩЕННЫЕ ХОДЫ: где можно было сыграть сильнее и как
+  🎯 3 КОНКРЕТНЫХ УЛУЧШЕНИЯ для следующей сессии
+  После разбора спроси: "Переиграть эту сцену или начать новую?"
+▶ "сложнее" — увеличь давление прямо сейчас
+▶ "мягче" — немного снизь напор
+
+Отвечай по-русски. Будь живым, конкретным, непредсказуемым.`;
+
+let st = {
+  key: localStorage.getItem('ng_key') || '',
+  s: -1, d: -1,
+  hist: [],
+  busy: false
+};
+
+if (st.key) show('home');
+
+function show(name) {
+  document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
+  setTimeout(() => { const el = document.getElementById('sc-' + name); if(el) el.classList.add('active'); }, 15);
+}
+
+function saveKey() {
+  const k = document.getElementById('api-inp').value.trim();
+  if (!k || !k.startsWith('AIza')) return toast('Ключ должен начинаться с AIza...');
+  st.key = k;
+  localStorage.setItem('ng_key', k);
+  show('home');
+}
+
+function pickS(i) {
+  st.s = i;
+  document.querySelectorAll('.sc-card').forEach(c => c.classList.remove('sel'));
+  document.querySelector(`.sc-card[data-s="${i}"]`).classList.add('sel');
+  checkReady();
+}
+
+function pickD(i) {
+  st.d = i;
+  document.querySelectorAll('.dp').forEach(p => p.classList.remove('sel'));
+  document.querySelector(`.dp[data-d="${i}"]`).classList.add('sel');
+  checkReady();
+}
+
+function checkReady() {
+  document.getElementById('start-btn').disabled = st.s < 0 || st.d < 0;
+}
+
+async function startChat() {
+  const ctx = document.getElementById('ctx-inp').value.trim();
+  document.getElementById('ch-title').textContent = SCENES[st.s];
+  document.getElementById('ch-sub').textContent = 'Идёт сессия';
+  document.getElementById('ch-badge').textContent = DIFFS[st.d];
+  st.hist = [];
+  document.getElementById('msgs').innerHTML = '';
+  show('chat');
+  setTimeout(() => document.getElementById('ci').focus(), 400);
+  const init = `Сценарий: ${SCENES[st.s]}. Уровень: ${DIFFS[st.d]}.${ctx ? ' Контекст: '+ctx : ''} Представься и жди первого хода.`;
+  await callAI(init, false);
+}
+
+function goHome() {
+  if (st.busy) return;
+  show('home');
+}
+
+async function send() {
+  const ci = document.getElementById('ci');
+  const txt = ci.value.trim();
+  if (!txt || st.busy) return;
+  ci.value = ''; resize(ci);
+  addMsg('user', txt);
+  await callAI(txt, true);
+}
+
+async function doHint() {
+  if (st.busy) return;
+  addCmd('💡 Запрос подсказки');
+  await callAI('подсказка', true);
+}
+
+async function doDebrief() {
+  if (st.busy) return;
+  addCmd('📋 Запрос разбора');
+  await callAI('стоп, разбор', true);
+}
+
+async function callAI(text, addToHist) {
+  st.hist.push({ role:'user', parts:[{text}] });
+  st.busy = true;
+  document.getElementById('send-b').disabled = true;
+
+  const typEl = addTyping();
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${st.key}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          system_instruction:{ parts:[{text: SYS}] },
+          contents: st.hist,
+          generationConfig:{ temperature:0.88, maxOutputTokens:1024 }
+        })
+      }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Ошибка API');
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!reply) throw new Error('Пустой ответ от AI');
+    st.hist.push({ role:'model', parts:[{text: reply}] });
+    typEl.remove();
+    const isHint = text === 'подсказка';
+    const isDbr  = text === 'стоп, разбор';
+    addMsg(isHint ? 'hint' : isDbr ? 'dbr' : 'ai', reply);
+  } catch(err) {
+    typEl.remove();
+    st.hist.pop();
+    toast('Ошибка: ' + err.message);
+  } finally {
+    st.busy = false;
+    document.getElementById('send-b').disabled = false;
+  }
+}
+
+function addMsg(role, text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  const bbl = document.createElement('div');
+  bbl.className = 'bbl';
+  bbl.textContent = text;
+  wrap.appendChild(bbl);
+  if (role === 'user') {
+    const t = document.createElement('div');
+    t.className = 'msg-t';
+    t.textContent = new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+    wrap.appendChild(t);
+  }
+  document.getElementById('msgs').appendChild(wrap);
+  scroll();
+}
+
+function addCmd(label) {
+  const el = document.createElement('div');
+  el.className = 'cmd-lbl';
+  el.textContent = label;
+  document.getElementById('msgs').appendChild(el);
+  scroll();
+}
+
+function addTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.innerHTML = '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  document.getElementById('msgs').appendChild(wrap);
+  scroll();
+  return wrap;
+}
+
+function scroll() {
+  const el = document.getElementById('msgs');
+  setTimeout(() => el.scrollTo({top: el.scrollHeight, behavior:'smooth'}), 60);
+}
+
+function onKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+function resize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 96) + 'px';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.style.display = 'none', 4500);
+}
+
+document.getElementById('api-inp').addEventListener('keydown', e => { if(e.key==='Enter') saveKey(); });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
