@@ -21,6 +21,8 @@
   --gold: #d4a843;
   --gold-bg: rgba(212,168,67,.1);
   --gold-br: rgba(212,168,67,.28);
+  --red: #f85149;
+  --red-bg: rgba(248,81,73,.15);
   --text: #e6edf3;
   --text2: #8b949e;
   --text3: #484f58;
@@ -32,15 +34,13 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;overflow:hidden}
 
-/* SCREENS */
 .screen{position:fixed;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .25s ease}
 .screen.active{display:flex;opacity:1}
 
-/* ── SETUP ── */
 #sc-setup{align-items:center;justify-content:center;padding:32px 24px;background:var(--bg)}
 .su-inner{width:100%;max-width:380px}
 .su-logo{text-align:center;margin-bottom:36px}
-.su-icon{width:60px;height:60px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px}
+.su-icon{width:60px;height:60px;background:var(--gold-bg);border:1px solid var(--gold-br);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);margin-bottom:14px}
 .su-logo h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:600}
 .su-logo p{font-size:13px;color:var(--text2);margin-top:5px}
 .card{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:22px}
@@ -56,7 +56,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .su-note{margin-top:10px;font-size:11px;color:var(--text3);text-align:center}
 .su-note a{color:var(--gold);text-decoration:none}
 
-/* ── HOME ── */
 #sc-home{background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .hh{padding:48px 20px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
 .hh h1{font-family:'Playfair Display',serif;font-size:20px;font-weight:600}
@@ -76,7 +75,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .ctx::placeholder{color:var(--text3)}
 .start-bar{position:fixed;bottom:0;left:0;right:0;padding:14px 20px;background:var(--bg);border-top:1px solid var(--border)}
 
-/* ── CHAT ── */
 #sc-chat{background:var(--bg)}
 .ch{display:flex;align-items:center;gap:10px;padding:42px 14px 12px;border-bottom:1px solid var(--border);background:var(--surf);flex-shrink:0}
 .back-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--surf2);border:1px solid var(--border);border-radius:8px;cursor:pointer;flex-shrink:0;font-size:15px;color:var(--text)}
@@ -107,10 +105,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .dot:nth-child(3){animation-delay:.4s}
 @keyframes tb{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 
-.cia{display:flex;gap:7px;padding:9px 11px;border-top:1px solid var(--border);background:var(--surf);align-items:flex-end;flex-shrink:0}
-.hint-b{width:38px;height:38px;flex-shrink:0;background:var(--surf2);border:1px solid var(--border);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:opacity .2s}
-.hint-b:active{opacity:.65}
-.ci{flex:1;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;max-height:96px;overflow-y:auto;line-height:1.4;transition:border-color .2s}
+.cia{display:flex;gap:6px;padding:9px 10px;border-top:1px solid var(--border);background:var(--surf);align-items:flex-end;flex-shrink:0}
+.icon-b{width:38px;height:38px;flex-shrink:0;background:var(--surf2);border:1px solid var(--border);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s}
+.icon-b:active{opacity:.65}
+.icon-b.listening{background:var(--red-bg);border-color:var(--red);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.45)}50%{box-shadow:0 0 0 8px rgba(248,81,73,0)}}
+.ci{flex:1;min-width:0;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;max-height:96px;overflow-y:auto;line-height:1.4;transition:border-color .2s}
 .ci:focus{border-color:var(--gold)}
 .ci::placeholder{color:var(--text3)}
 .send-b{width:38px;height:38px;flex-shrink:0;background:var(--gold);border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .1s}
@@ -120,7 +120,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 
 .toast{position:fixed;bottom:78px;left:14px;right:14px;background:rgba(248,81,73,.92);color:#fff;padding:11px 14px;border-radius:8px;font-size:13px;text-align:center;z-index:200;display:none}
 
-/* key tip on home */
 .key-tip{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.4}
 .key-tip b{color:var(--text2);font-weight:500}
 
@@ -131,11 +130,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 </head>
 <body>
 
-<!-- ── SETUP ── -->
 <div id="sc-setup" class="screen active">
   <div class="su-inner">
     <div class="su-logo">
-      <div class="su-icon">🤝</div>
+      <div class="su-icon">GAP</div>
       <h1>GAP</h1>
       <p>AI-тренажёр переговоров · GAP (узб.) — разговор</p>
     </div>
@@ -149,7 +147,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   </div>
 </div>
 
-<!-- ── HOME ── -->
 <div id="sc-home" class="screen">
   <div class="hh">
     <h1>Новая сессия</h1>
@@ -176,7 +173,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <textarea class="ctx" id="ctx-inp" placeholder="Тип клиента, сумма, история отношений..."></textarea>
 
     <div class="key-tip" style="margin-top:16px">
-      Во время разговора: <b>💡</b> — подсказка &nbsp;·&nbsp; <b>Разбор</b> — анализ сессии &nbsp;·&nbsp; <b>сложнее / мягче</b> — управление напором
+      В чате: <b>💡</b> — подсказка &nbsp;·&nbsp; <b>🎤</b> — голосовой ввод &nbsp;·&nbsp; <b>Разбор</b> — анализ сессии
     </div>
   </div>
   <div class="start-bar">
@@ -184,7 +181,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   </div>
 </div>
 
-<!-- ── CHAT ── -->
 <div id="sc-chat" class="screen">
   <div class="ch">
     <div class="back-btn" onclick="goHome()">←</div>
@@ -197,8 +193,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   </div>
   <div class="msgs" id="msgs"></div>
   <div class="cia">
-    <div class="hint-b" onclick="doHint()" title="Подсказка">💡</div>
-    <textarea class="ci" id="ci" placeholder="Ваш ответ..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+    <div class="icon-b" onclick="doHint()" title="Подсказка">💡</div>
+    <textarea class="ci" id="ci" placeholder="Ваш ответ или 🎤..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+    <div class="icon-b" id="mic-b" onclick="toggleMic()" title="Голосовой ввод">🎤</div>
     <button class="send-b" id="send-b" onclick="send()">
       <svg viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>
     </button>
@@ -253,6 +250,9 @@ let st = {
   busy: false
 };
 
+let recognition = null;
+let listening = false;
+
 if (st.key) show('home');
 
 function show(name) {
@@ -296,11 +296,12 @@ async function startChat() {
   show('chat');
   setTimeout(() => document.getElementById('ci').focus(), 400);
   const init = `Сценарий: ${SCENES[st.s]}. Уровень: ${DIFFS[st.d]}.${ctx ? ' Контекст: '+ctx : ''} Представься и жди первого хода.`;
-  await callAI(init, false);
+  await callAI(init);
 }
 
 function goHome() {
   if (st.busy) return;
+  if (listening) stopMic();
   show('home');
 }
 
@@ -308,24 +309,91 @@ async function send() {
   const ci = document.getElementById('ci');
   const txt = ci.value.trim();
   if (!txt || st.busy) return;
+  if (listening) stopMic();
   ci.value = ''; resize(ci);
   addMsg('user', txt);
-  await callAI(txt, true);
+  await callAI(txt);
 }
 
 async function doHint() {
   if (st.busy) return;
   addCmd('💡 Запрос подсказки');
-  await callAI('подсказка', true);
+  await callAI('подсказка');
 }
 
 async function doDebrief() {
   if (st.busy) return;
   addCmd('📋 Запрос разбора');
-  await callAI('стоп, разбор', true);
+  await callAI('стоп, разбор');
 }
 
-async function callAI(text, addToHist) {
+// === VOICE INPUT ===
+function getRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'ru-RU';
+  r.continuous = false;
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+  r.onstart = () => {
+    listening = true;
+    document.getElementById('mic-b').classList.add('listening');
+  };
+  r.onend = () => {
+    listening = false;
+    document.getElementById('mic-b').classList.remove('listening');
+  };
+  r.onerror = (e) => {
+    listening = false;
+    document.getElementById('mic-b').classList.remove('listening');
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      toast('Разрешите доступ к микрофону в настройках Chrome');
+    } else if (e.error === 'no-speech') {
+      toast('Речь не распознана, попробуйте ещё раз');
+    } else if (e.error === 'network') {
+      toast('Нет интернета для распознавания речи');
+    } else if (e.error !== 'aborted') {
+      toast('Ошибка микрофона: ' + e.error);
+    }
+  };
+  r.onresult = (e) => {
+    const ci = document.getElementById('ci');
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+    }
+    if (final) {
+      ci.value = (ci.value ? ci.value + ' ' : '') + final.trim();
+      resize(ci);
+    }
+  };
+  return r;
+}
+
+function toggleMic() {
+  if (!recognition) {
+    recognition = getRecognition();
+    if (!recognition) {
+      toast('Голосовой ввод не поддерживается в этом браузере');
+      return;
+    }
+  }
+  if (listening) {
+    stopMic();
+  } else {
+    try { recognition.start(); } catch(e) { /* already started */ }
+  }
+}
+
+function stopMic() {
+  if (recognition && listening) {
+    try { recognition.stop(); } catch(e) {}
+  }
+}
+
+// === API ===
+async function callAI(text) {
   st.hist.push({ role:'user', parts:[{text}] });
   st.busy = true;
   document.getElementById('send-b').disabled = true;
