@@ -334,7 +334,7 @@ async function callAI(text, addToHist) {
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${st.key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${st.key}`,
       {
         method:'POST',
         headers:{'Content-Type':'application/json'},
