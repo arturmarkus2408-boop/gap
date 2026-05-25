@@ -523,7 +523,7 @@ async function callAI(text) {
         body: JSON.stringify({
           system_instruction:{ parts:[{text: SYS}] },
           contents: st.hist,
-          generationConfig:{ temperature:0.88, maxOutputTokens:1024 }
+          generationConfig:{ temperature:0.88, maxOutputTokens:4096 }
         })
       }
     );
