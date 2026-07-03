@@ -135,6 +135,51 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 ::-webkit-scrollbar{width:2px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:1px}
+
+/* --- Мини-кнопки под ответами ИИ --- */
+.msg-acts{display:flex;gap:6px;margin-top:5px;padding:0 2px}
+.mini-b{display:flex;align-items:center;gap:4px;background:var(--surf2);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:11px;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s}
+.mini-b:active{opacity:.6}
+.mini-b.saved{background:var(--gold-bg);border-color:var(--gold-br);color:var(--gold)}
+
+/* --- Кнопка избранного в шапке --- */
+.fav-count{position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;background:var(--gold);color:#0d1117;border-radius:8px;font-size:9px;font-weight:600;display:none;align-items:center;justify-content:center;line-height:1}
+.fav-count.show{display:flex}
+
+/* --- Модальное окно экспорта --- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.modal.open{display:flex}
+.sheet{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:18px 18px 28px;animation:sheetUp .25s ease}
+@keyframes sheetUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-h{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;margin-bottom:4px}
+.sheet-sub{font-size:12px;color:var(--text2);margin-bottom:16px}
+.sheet-lbl{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:14px 0 8px}
+.opt-row{display:flex;gap:7px;margin-bottom:2px}
+.opt{flex:1;text-align:center;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:11px 6px;font-size:13px;cursor:pointer;transition:all .2s;color:var(--text2)}
+.opt.sel{border-color:var(--gold);color:var(--gold);background:var(--gold-bg)}
+.opt small{display:block;font-size:10px;color:var(--text3);margin-top:2px}
+.opt.sel small{color:var(--gold)}
+.sheet-btns{display:flex;gap:8px;margin-top:20px}
+.sheet-btns .btn{flex:1}
+.btn-sec{background:var(--surf2);color:var(--text);border:1px solid var(--border)}
+.fav-empty{font-size:13px;color:var(--text3);text-align:center;padding:16px 0}
+
+/* --- Печатная версия (видна только при печати) --- */
+#print-area{display:none}
+@media print{
+  body *{visibility:hidden}
+  #print-area,#print-area *{visibility:visible}
+  #print-area{display:block;position:absolute;left:0;top:0;width:100%;padding:0;background:#fff;color:#000}
+  .pr-head{border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
+  .pr-head h1{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:2px;color:#000}
+  .pr-head .pr-meta{font-size:12px;color:#444}
+  .pr-msg{margin-bottom:12px;page-break-inside:avoid}
+  .pr-role{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#666;margin-bottom:2px}
+  .pr-role.user{color:#1a4a8a}
+  .pr-role.ai{color:#0a6b2f}
+  .pr-text{font-size:13px;line-height:1.5;white-space:pre-wrap;color:#000}
+  .pr-fav-badge{display:inline-block;font-size:10px;background:#f0e0b0;color:#7a5a00;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle}
+}
 </style>
 </head>
 <body>
@@ -199,6 +244,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     </div>
     <div class="badge" id="ch-badge">Средний</div>
     <div class="head-b" id="speaker-b" onclick="toggleSpeaker()" title="Режим за рулём">🔊</div>
+    <div class="head-b" id="export-b" onclick="openExport()" title="Экспорт диалога" style="position:relative">⬆️<span class="fav-count" id="fav-count">0</span></div>
     <button class="dbr-btn" onclick="doDebrief()">📋 Разбор</button>
   </div>
   <div class="msgs" id="msgs"></div>
@@ -213,6 +259,34 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Модальное окно экспорта -->
+<div class="modal" id="export-modal" onclick="if(event.target===this)closeExport()">
+  <div class="sheet">
+    <div class="sheet-h">Экспорт диалога</div>
+    <div class="sheet-sub">Сохраните переговоры для распечатки или отправки</div>
+
+    <div class="sheet-lbl">Что сохранить</div>
+    <div class="opt-row">
+      <div class="opt sel" id="opt-all" onclick="pickScope('all')">Весь диалог<small id="opt-all-cnt">0 сообщений</small></div>
+      <div class="opt" id="opt-fav" onclick="pickScope('fav')">Только избранное<small id="opt-fav-cnt">0 отмечено</small></div>
+    </div>
+
+    <div class="sheet-lbl">Формат</div>
+    <div class="opt-row">
+      <div class="opt sel" id="opt-pdf" onclick="pickFormat('pdf')">📄 PDF<small>для печати</small></div>
+      <div class="opt" id="opt-share" onclick="pickFormat('share')">📤 Поделиться<small>в мессенджер</small></div>
+    </div>
+
+    <div class="sheet-btns">
+      <button class="btn btn-sec" onclick="closeExport()">Отмена</button>
+      <button class="btn" id="export-go" onclick="doExport()">Готово</button>
+    </div>
+  </div>
+</div>
+
+<!-- Скрытая печатная область -->
+<div id="print-area"></div>
 
 <script>
 const SCENES = ['Продажа услуг новому клиенту','Удержание / допродажа клиенту','Переговоры с партнёром или сотрудником','Переговоры с кредитором, банком или налоговой'];
@@ -315,7 +389,9 @@ async function startChat() {
   document.getElementById('ch-sub').textContent = 'Идёт сессия';
   document.getElementById('ch-badge').textContent = DIFFS[st.d];
   st.hist = [];
+  msgSeq = 0;
   document.getElementById('msgs').innerHTML = '';
+  updateFavCount();
   show('chat');
   setTimeout(() => document.getElementById('ci').focus(), 400);
   const init = `Сценарий: ${SCENES[st.s]}. Уровень: ${DIFFS[st.d]}.${ctx ? ' Контекст: '+ctx : ''} Представься коротко (1-2 предложения) и жди первого хода.`;
@@ -571,9 +647,15 @@ async function callAI(text) {
   }
 }
 
+let msgSeq = 0;
+
 function addMsg(role, text) {
+  const id = ++msgSeq;
   const wrap = document.createElement('div');
   wrap.className = 'msg ' + role;
+  wrap.dataset.mid = id;
+  wrap.dataset.text = text;
+  wrap.dataset.role = role;
   const bbl = document.createElement('div');
   bbl.className = 'bbl';
   bbl.textContent = text;
@@ -583,6 +665,23 @@ function addMsg(role, text) {
     t.className = 'msg-t';
     t.textContent = new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
     wrap.appendChild(t);
+  }
+  // Кнопки действий — только для ответов ИИ (ai / hint / dbr)
+  if (role === 'ai' || role === 'hint' || role === 'dbr') {
+    const acts = document.createElement('div');
+    acts.className = 'msg-acts';
+    const isFav = favorites.some(f => f.text === text);
+    const starBtn = document.createElement('div');
+    starBtn.className = 'mini-b' + (isFav ? ' saved' : '');
+    starBtn.innerHTML = (isFav ? '⭐' : '☆') + ' <span>' + (isFav ? 'В избранном' : 'Сохранить') + '</span>';
+    starBtn.onclick = () => toggleFav(id, text, starBtn);
+    const copyBtn = document.createElement('div');
+    copyBtn.className = 'mini-b';
+    copyBtn.innerHTML = '📋 <span>Копировать</span>';
+    copyBtn.onclick = () => copyText(text);
+    acts.appendChild(starBtn);
+    acts.appendChild(copyBtn);
+    wrap.appendChild(acts);
   }
   document.getElementById('msgs').appendChild(wrap);
   scroll();
@@ -629,6 +728,193 @@ function toast(msg, isErr) {
 }
 
 document.getElementById('api-inp').addEventListener('keydown', e => { if(e.key==='Enter') saveKey(); });
+
+// ==================== ИЗБРАННОЕ И ЭКСПОРТ ====================
+
+// Избранное живёт в localStorage — переживает закрытие приложения
+let favorites = JSON.parse(localStorage.getItem('ng_favs') || '[]');
+let exportScope = 'all';   // 'all' | 'fav'
+let exportFormat = 'pdf';  // 'pdf' | 'share'
+
+function saveFavs() {
+  localStorage.setItem('ng_favs', JSON.stringify(favorites));
+  updateFavCount();
+}
+
+function updateFavCount() {
+  const badge = document.getElementById('fav-count');
+  if (!badge) return;
+  badge.textContent = favorites.length;
+  badge.classList.toggle('show', favorites.length > 0);
+}
+
+function toggleFav(id, text, btnEl) {
+  const idx = favorites.findIndex(f => f.text === text);
+  if (idx >= 0) {
+    favorites.splice(idx, 1);
+    btnEl.classList.remove('saved');
+    btnEl.innerHTML = '☆ <span>Сохранить</span>';
+    toast('Убрано из избранного');
+  } else {
+    favorites.push({ text, scene: SCENES[st.s] || '', time: Date.now() });
+    btnEl.classList.add('saved');
+    btnEl.innerHTML = '⭐ <span>В избранном</span>';
+    toast('⭐ Добавлено в избранное');
+  }
+  saveFavs();
+}
+
+function copyText(text) {
+  const done = () => toast('📋 Скопировано');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done(); } catch(e) { toast('Не удалось скопировать', true); }
+  document.body.removeChild(ta);
+}
+
+// --- Открытие/закрытие окна экспорта ---
+function openExport() {
+  // Считаем реальные сообщения на экране (кроме команд-меток)
+  const allMsgs = document.querySelectorAll('#msgs .msg[data-text]');
+  document.getElementById('opt-all-cnt').textContent = allMsgs.length + ' сообщений';
+  document.getElementById('opt-fav-cnt').textContent = favorites.length + ' отмечено';
+  // Если избранного нет — по умолчанию весь диалог
+  if (favorites.length === 0 && exportScope === 'fav') pickScope('all');
+  document.getElementById('export-modal').classList.add('open');
+}
+
+function closeExport() {
+  document.getElementById('export-modal').classList.remove('open');
+}
+
+function pickScope(scope) {
+  if (scope === 'fav' && favorites.length === 0) {
+    toast('Пока нет избранного. Отметьте ответы звёздочкой ⭐', true);
+    return;
+  }
+  exportScope = scope;
+  document.getElementById('opt-all').classList.toggle('sel', scope === 'all');
+  document.getElementById('opt-fav').classList.toggle('sel', scope === 'fav');
+}
+
+function pickFormat(fmt) {
+  exportFormat = fmt;
+  document.getElementById('opt-pdf').classList.toggle('sel', fmt === 'pdf');
+  document.getElementById('opt-share').classList.toggle('sel', fmt === 'share');
+}
+
+// --- Сбор данных диалога ---
+function getExportItems() {
+  if (exportScope === 'fav') {
+    return favorites.map(f => ({ role: 'ai', text: f.text, fav: true }));
+  }
+  const items = [];
+  document.querySelectorAll('#msgs .msg[data-text]').forEach(el => {
+    const role = el.dataset.role;
+    const text = el.dataset.text;
+    const isFav = favorites.some(f => f.text === text);
+    items.push({ role, text, fav: isFav });
+  });
+  return items;
+}
+
+function roleLabel(role) {
+  if (role === 'user') return 'Вы';
+  if (role === 'hint') return 'Подсказка';
+  if (role === 'dbr') return 'Разбор';
+  return 'Собеседник';
+}
+
+// Плоский текст — для «Поделиться» и как основа
+function buildDialogText() {
+  const items = getExportItems();
+  const scene = SCENES[st.s] || 'Переговоры';
+  const diff = DIFFS[st.d] || '';
+  const date = new Date().toLocaleDateString('ru', {day:'2-digit',month:'long',year:'numeric'});
+  let out = `GAP — тренажёр переговоров\n${scene}${diff ? ' · '+diff : ''}\n${date}\n`;
+  out += (exportScope === 'fav' ? '(Избранные фрагменты)\n' : '') + '\n' + '─'.repeat(30) + '\n\n';
+  items.forEach(it => {
+    out += roleLabel(it.role).toUpperCase() + (it.fav ? ' ⭐' : '') + ':\n' + it.text + '\n\n';
+  });
+  return out.trim();
+}
+
+// --- Главная функция экспорта ---
+function doExport() {
+  const items = getExportItems();
+  if (items.length === 0) {
+    toast('Нечего экспортировать', true);
+    return;
+  }
+  closeExport();
+  if (exportFormat === 'share') {
+    shareDialog();
+  } else {
+    printDialog(items);
+  }
+}
+
+// Поделиться через системное меню телефона
+async function shareDialog() {
+  const text = buildDialogText();
+  const scene = SCENES[st.s] || 'Переговоры';
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'GAP — ' + scene, text });
+    } catch(e) {
+      // пользователь отменил — тихо
+    }
+  } else {
+    // На десктопе Web Share часто нет — копируем в буфер
+    copyText(text);
+    toast('📋 Диалог скопирован — вставьте в мессенджер');
+  }
+}
+
+// Печать → пользователь сохраняет как PDF
+function printDialog(items) {
+  const scene = SCENES[st.s] || 'Переговоры';
+  const diff = DIFFS[st.d] || '';
+  const date = new Date().toLocaleDateString('ru', {day:'2-digit',month:'long',year:'numeric'});
+  const area = document.getElementById('print-area');
+
+  let html = '<div class="pr-head"><h1>GAP — тренажёр переговоров</h1>';
+  html += '<div class="pr-meta">' + esc(scene) + (diff ? ' · ' + esc(diff) : '') + ' · ' + esc(date);
+  html += (exportScope === 'fav' ? ' · Избранные фрагменты' : '') + '</div></div>';
+
+  items.forEach(it => {
+    html += '<div class="pr-msg">';
+    html += '<div class="pr-role ' + (it.role === 'user' ? 'user' : 'ai') + '">' + esc(roleLabel(it.role));
+    html += (it.fav ? '<span class="pr-fav-badge">избранное</span>' : '') + '</div>';
+    html += '<div class="pr-text">' + esc(it.text) + '</div></div>';
+  });
+
+  area.innerHTML = html;
+  toast('Открываю печать → выберите «Сохранить как PDF»');
+  setTimeout(() => window.print(), 300);
+}
+
+// Экранирование HTML, чтобы текст не ломал вёрстку
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+// Инициализация счётчика при старте
+updateFavCount();
+
+// ==================== /ИЗБРАННОЕ И ЭКСПОРТ ====================
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
