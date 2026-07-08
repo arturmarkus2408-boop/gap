@@ -37,8 +37,9 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;overflow:hidden}
 
-.screen{position:fixed;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .25s ease}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .25s ease;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .screen.active{display:flex;opacity:1}
+#sc-chat{overflow:hidden}
 
 #sc-setup{align-items:center;justify-content:center;padding:32px 24px;background:var(--bg)}
 .su-inner{width:100%;max-width:380px}
@@ -518,7 +519,14 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Показываем home если хоть один ключ есть
-if (st.key || st.groqKey || st.orKey) show('home');
+// При загрузке: если хоть один ключ уже сохранён — показываем home и кнопку "Назад" на setup.
+// Это защита от ситуации "открыл setup случайно и не могу вернуться на главный экран".
+if (st.key || st.groqKey || st.orKey) {
+  show('home');
+  // Готовим кнопку Назад для setup - если пользователь потом нажмёт ⚙️
+  const backEl = document.getElementById('setup-back');
+  if (backEl) backEl.style.display = 'flex';
+}
 
 // preload TTS voices
 if ('speechSynthesis' in window) {
