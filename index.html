@@ -470,6 +470,32 @@ async function releaseWakeLock() {
   }
 }
 
+// Попытка "разбудить" Bluetooth-микрофон машины через переключение профиля BT.
+// getUserMedia с шумоподавлением на Android часто заставляет систему переключить
+// Bluetooth с A2DP (только вывод) на HFP (двусторонний) - тогда работает и микрофон машины.
+// Работает не на всех устройствах, но не имеет побочных эффектов - можно вызывать всегда.
+let btMicPrimed = false;
+async function primeBluetoothMic() {
+  if (btMicPrimed) return true;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      }
+    });
+    // Сразу отпускаем поток - нам нужен был только сам факт запроса, чтобы Android переключил профиль
+    stream.getTracks().forEach(t => t.stop());
+    btMicPrimed = true;
+    return true;
+  } catch(e) {
+    // Пользователь отклонил или BT не переключился - не критично
+    return false;
+  }
+}
+
 // Когда пользователь возвращается в приложение (например, снял блокировку) -
 // wake lock мог освободиться сам, восстанавливаем его, если режим "за рулём" ещё активен
 document.addEventListener('visibilitychange', () => {
@@ -599,8 +625,10 @@ async function send() {
   const txt = ci.value.trim();
   if (!txt || st.busy) return;
   if (autoSendTimer) { clearInterval(autoSendTimer); autoSendTimer = null; }
+  clearSilenceTimer();
   document.getElementById('autosend-bar').classList.remove('show');
   voiceFilled = false;
+  userStoppedMic = false; // после отправки цикл продолжается - микрофон снова может перезапускаться
   if (listening) stopMic();
   ci.value = ''; resize(ci);
   addMsg('user', txt);
@@ -628,6 +656,8 @@ function toggleSpeaker() {
     toast('🚗 Режим «за рулём» включён. Экран не будет гаснуть');
     // Блокируем автозасыпание экрана - критично для езды
     acquireWakeLock();
+    // Пробуем задействовать Bluetooth-микрофон машины (если подключён)
+    primeBluetoothMic();
     // trigger TTS warm-up with user gesture
     if ('speechSynthesis' in window) {
       const u = new SpeechSynthesisUtterance(' ');
@@ -735,6 +765,7 @@ function startAutoSend() {
 
 function cancelAutoSend(byUser) {
   if (autoSendTimer) { clearInterval(autoSendTimer); autoSendTimer = null; }
+  clearSilenceTimer();
   const bar = document.getElementById('autosend-bar');
   if (bar) bar.classList.remove('show');
   voiceFilled = false;
@@ -851,6 +882,8 @@ function startVoiceWizard() {
   }
   // Блокируем засыпание экрана - актуально и для мастера, и для сессии
   acquireWakeLock();
+  // Пробуем задействовать Bluetooth-микрофон машины
+  primeBluetoothMic();
   wizardActive = true;
   wizardAttempts = 0;
   wizardCtx = '';
@@ -1090,57 +1123,102 @@ function askExportFormat() {
 // === /ГОЛОСОВЫЕ КОМАНДЫ ===
 
 // === VOICE INPUT ===
+// Таймер "молчания" - запускает автоотправку после N секунд после последнего слова
+let silenceTimer = null;
+const SILENCE_MS = 6000;  // сколько ждать тишины до запуска отсчёта авто-отправки
+// Флаг: пользователь явно остановил микрофон (нажал кнопку) - не перезапускать автоматически
+let userStoppedMic = false;
+
+function armSilenceTimer() {
+  if (silenceTimer) clearTimeout(silenceTimer);
+  silenceTimer = setTimeout(() => {
+    // 6 секунд тишины прошло - если в поле есть текст и не заняты - запускаем отсчёт авто-отправки
+    const ci = document.getElementById('ci');
+    if (ci.value.trim() && !st.busy && voiceFilled) {
+      startAutoSend();
+    }
+  }, SILENCE_MS);
+}
+
+function clearSilenceTimer() {
+  if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+}
+
 function getRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
   const r = new SR();
   r.lang = 'ru-RU';
-  r.continuous = false;
+  // Continuous = true: микрофон держится и не выключается на коротких паузах речи
+  r.continuous = true;
   r.interimResults = true;
   r.maxAlternatives = 1;
+
   r.onstart = () => {
     listening = true;
     document.getElementById('mic-b').classList.add('listening');
+    userStoppedMic = false;
   };
+
   r.onend = () => {
     listening = false;
     document.getElementById('mic-b').classList.remove('listening');
-    // Если голосом надиктован текст и приложение не занято — запускаем отсчёт авто-отправки
+    // В режиме "за рулём" перезапускаем микрофон автоматически - если пользователь его не выключал сам
+    if (speakMode && !userStoppedMic && !st.busy) {
+      setTimeout(() => {
+        if (speakMode && !listening && !st.busy) {
+          try { r.start(); } catch(e) {}
+        }
+      }, 400);
+    }
+    // Если есть текст и таймер молчания уже не тикает - запускаем отсчёт авто-отправки
     const ci = document.getElementById('ci');
-    if (voiceFilled && ci.value.trim() && !st.busy) {
+    if (voiceFilled && ci.value.trim() && !st.busy && !silenceTimer) {
       startAutoSend();
     }
   };
+
   r.onerror = (e) => {
     listening = false;
     document.getElementById('mic-b').classList.remove('listening');
+    // "Тихие" ошибки - не показываем красный тост, они норма при езде
+    const quietErrors = ['no-speech', 'aborted', 'audio-capture'];
+    if (quietErrors.includes(e.error)) {
+      return; // тихо, onend всё равно вызовется и в режиме "за рулём" микрофон перезапустится
+    }
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
       toast('Разрешите доступ к микрофону в настройках Chrome', true);
-    } else if (e.error === 'no-speech') {
-      // silent fail
     } else if (e.error === 'network') {
       toast('Нет интернета для распознавания речи', true);
-    } else if (e.error !== 'aborted') {
+    } else {
       toast('Ошибка микрофона: ' + e.error, true);
     }
   };
+
   r.onresult = (e) => {
     const ci = document.getElementById('ci');
     let final = '';
+    let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    // Любая речь (даже промежуточная) сбрасывает таймер молчания и отсчёт автоотправки
+    if (final || interim.trim()) {
+      cancelAutoSend();
+      clearSilenceTimer();
     }
     if (final) {
       const t = final.trim();
       // Проверяем голосовые команды - обрабатываем ДО добавления в поле
       if (tryVoiceCommand(t)) {
-        // Команда выполнена, поле не трогаем, авто-отправку не запускаем
         return;
       }
       ci.value = (ci.value ? ci.value + ' ' : '') + t;
       resize(ci);
       voiceFilled = true;
-      cancelAutoSend(); // новая речь сбрасывает предыдущий отсчёт
+      // После получения final запускаем таймер молчания
+      armSilenceTimer();
     }
   };
   return r;
@@ -1148,6 +1226,7 @@ function getRecognition() {
 
 function toggleMic() {
   cancelAutoSend(); // повторный вход в запись отменяет ждущий отсчёт
+  clearSilenceTimer();
   if (!recognition) {
     recognition = getRecognition();
     if (!recognition) {
@@ -1156,13 +1235,16 @@ function toggleMic() {
     }
   }
   if (listening) {
+    userStoppedMic = true; // явное действие - не перезапускать автоматически
     stopMic();
   } else {
+    userStoppedMic = false;
     try { recognition.start(); } catch(e) {}
   }
 }
 
 function stopMic() {
+  clearSilenceTimer();
   if (recognition && listening) {
     try { recognition.stop(); } catch(e) {}
   }
